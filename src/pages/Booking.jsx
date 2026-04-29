@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import { supabase } from '../supabase'
 
 const TIME_SLOTS = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM',
@@ -18,11 +19,27 @@ export default function Booking() {
 
   const [date, setDate] = useState('')
   const [slot, setSlot] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const today = new Date().toISOString().split('T')[0]
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!date || !slot) return
+    setLoading(true)
+    setError('')
+
+    const { error: dbError } = await supabase
+      .from('bookings')
+      .insert({ doctor, specialty, date, slot })
+
+    setLoading(false)
+
+    if (dbError) {
+      setError('Failed to save booking. Please try again.')
+      return
+    }
+
     navigate('/success', { state: { doctor, specialty, date, slot } })
   }
 
@@ -35,13 +52,11 @@ export default function Booking() {
           <h2>Book an Appointment</h2>
           <p>Select your preferred date and time slot below.</p>
 
-          {/* Doctor info summary */}
           <div className="booking-summary">
             <p><span>👨‍⚕️ Doctor:</span> <strong>{doctor}</strong></p>
             <p><span>🏥 Specialty:</span> <strong>{specialty}</strong></p>
           </div>
 
-          {/* Date picker */}
           <div className="booking-section">
             <h3>📅 Choose a Date</h3>
             <input
@@ -52,7 +67,6 @@ export default function Booking() {
             />
           </div>
 
-          {/* Time slots */}
           <div className="booking-section">
             <h3>🕐 Choose a Time Slot</h3>
             <div className="time-slots">
@@ -72,14 +86,19 @@ export default function Booking() {
             </div>
           </div>
 
-          {/* Confirm */}
+          {error && (
+            <p style={{ color: '#dc2626', fontSize: '.9rem', marginBottom: '1rem' }}>
+              ⚠️ {error}
+            </p>
+          )}
+
           <button
             className="btn btn-primary btn-block"
-            disabled={!date || !slot}
-            style={{ opacity: (!date || !slot) ? 0.5 : 1, cursor: (!date || !slot) ? 'not-allowed' : 'pointer' }}
+            disabled={!date || !slot || loading}
+            style={{ opacity: (!date || !slot || loading) ? 0.5 : 1, cursor: (!date || !slot || loading) ? 'not-allowed' : 'pointer' }}
             onClick={handleConfirm}
           >
-            Confirm Appointment
+            {loading ? 'Saving...' : 'Confirm Appointment'}
           </button>
         </div>
       </div>
