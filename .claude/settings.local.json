@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\Users\\\\hp\\\\Desktop\\\\Shresht\\\\29_Ai_Workshop\"; npm create vite@latest . -- --template react 2>&1 | Select-Object -Last 20)"
+    ]
+  }
+}
